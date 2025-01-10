@@ -1,0 +1,146 @@
+/* Ensure html and body take up the full height of the viewport */
+html, body {
+    height: 100%;
+    margin: 0;
+    background-image: url('../images/bg.jpg'); /* Example background image */
+    background-size: cover; /* Ensure image covers entire container */
+    background-position: center center; /* Center the background image */
+    background-repeat: no-repeat; /* Prevent the image from repeating */
+}
+
+/* Full page background */
+.auth-container {
+    height: 100%; /* Ensures container takes full height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Card for the form */
+.auth-card {
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
+    border-radius: 8px;
+    padding: 30px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.auth-title {
+    font-size: 24px;
+    text-align: center;
+    color: #ff9800; /* Orange color */
+    margin-bottom: 20px;
+}
+
+/* Style the link to toggle between login/signup */
+.auth-link {
+    color: #ff9800;
+    text-decoration: none;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+}
+
+/* Button customization */
+.btn-primary {
+    background-color: #ff9800;
+    border-color: #ff9800;
+}
+
+.btn-primary:hover {
+    background-color: #e68900;
+    border-color: #e68900;
+}
+
+/* Form input styles */
+.form-control {
+    border-radius: 6px;
+}
+
+.admin-dashboard {
+    display: flex;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    height: 100vh;
+    position: fixed;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+.content {
+    margin-left: 270px;
+    padding: 20px;
+    width: calc(100% - 270px);
+    position: relative;
+}
+
+.logout {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+.vendor-dashboard {
+    padding: 20px;
+}
+
+.product-form,
+.products-table {
+    margin-bottom: 20px;
+}
+
+.product-form input,
+.product-form textarea,
+.product-form select {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+}
+
+.product-form button {
+    padding: 10px 15px;
+    margin-right: 10px;
+}
+
+.products-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.products-table th,
+.products-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.products-table th {
+    background-color: #f4f4f4;
+}
+
+.error {
+    color: red;
+}
+
+

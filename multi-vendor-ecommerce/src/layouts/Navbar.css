@@ -1,0 +1,13 @@
+.navbar {
+    background-color: #ff9800; /* Orange */
+}
+
+.navbar-brand,
+.nav-link {
+    color: white !important;
+    font-weight: bold;
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+}
