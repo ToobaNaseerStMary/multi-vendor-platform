@@ -12,6 +12,8 @@ import ManageOrders from './components/admin/ManageOrders';
 import VendorDashboard from './components/vendor/Dashboard';
 import ProductsManagement from './components/vendor/ProductsManagement';
 import VendorOrdersManagement from './components/vendor/VendorOrdersManagement';
+import BuyerDashboard from './components/buyer/Dashboard';
+import GetProducts from './components/buyer/GetProducts';
 
 function App() {
     // Custom Hook to Hide Navbar on Specific Pages
@@ -43,6 +45,8 @@ function App() {
                     <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                     <Route path="/vendor/products" element={<ProductsManagement />} />
                     <Route path="/vendor/orders" element={<VendorOrdersManagement />} />
+                    <Route path="/buyer/dashboard" element={<BuyerDashboard />} />
+                    <Route path="/buyer/get-products" element={<GetProducts />} />
                 </Routes>
             </HideNavbar>
         </Router>

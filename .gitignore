@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+ecommerce-app-backend/node_modules/
+multi-vendor-ecommerce/node_modules/
