@@ -4,7 +4,7 @@ const Order = require('../models/Order');
 
 exports.getProducts = async (req, res) => {
   try {
-    const { search, category, minPrice, maxPrice, sortBy, page = 1, limit = 10 } = req.query;
+    const { search, category, minPrice, maxPrice, sortBy } = req.query;
 
     const query = { is_deleted: false };
 
@@ -25,9 +25,6 @@ exports.getProducts = async (req, res) => {
       if (maxPrice) query.price.$lte = parseFloat(maxPrice);
     }
 
-    // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
     // Sorting
     const sortOptions = {};
     if (sortBy) {
@@ -39,11 +36,7 @@ exports.getProducts = async (req, res) => {
     const products = await Product.find(query)
       .populate('category', 'name')
       .populate('vendor', 'username email')
-      .skip(skip)
-      .limit(parseInt(limit))
       .sort(sortOptions);
-
-    const totalProducts = await Product.countDocuments(query);
 
     // Group products by category
     const groupedProducts = products.reduce((group, product) => {
@@ -56,9 +49,7 @@ exports.getProducts = async (req, res) => {
     }, {});
 
     res.status(200).json({
-      totalProducts,
-      page: parseInt(page),
-      limit: parseInt(limit),
+      totalProducts: products.length,
       data: groupedProducts,
     });
   } catch (error) {
@@ -67,48 +58,66 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+
 exports.placeOrder = async (req, res) => {
-    try {
-      const { products } = req.body; // Array of { productId, quantity }
-  
-      // Fetch products and validate they are from the same vendor
-      const productIds = products.map((p) => p.productId);
-      const fetchedProducts = await Product.find({ _id: { $in: productIds } });
-  
-      if (!fetchedProducts.length) {
-        return res.status(400).json({ message: 'No valid products found in the order' });
-      }
-  
-      const vendorIds = new Set(fetchedProducts.map((p) => p.vendor.toString()));
-      if (vendorIds.size > 1) {
-        return res.status(400).json({ message: 'You can only order products from a single vendor' });
-      }
-  
-      // Calculate total price
-      const totalPrice = products.reduce((total, item) => {
-        const product = fetchedProducts.find((p) => p._id.toString() === item.productId);
-        return total + product.price * item.quantity;
-      }, 0);
-  
-      // Create order
-      const order = new Order({
-        buyer: req.user.id,
-        products: products.map((item) => ({
-          product: item.productId,
-          quantity: item.quantity,
-        })),
-        totalPrice,
-        status: 'confirmed',
-      });
-  
-      await order.save();
-  
-      res.status(201).json(order);
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).json({ message: 'Server error' });
+  try {
+    const { products } = req.body; // Array of { productId, quantity }
+
+    // Fetch products and validate they are from the same vendor
+    const productIds = products.map((p) => p.productId);
+    const fetchedProducts = await Product.find({ _id: { $in: productIds } });
+
+    if (!fetchedProducts.length) {
+      return res.status(400).json({ message: 'No valid products found in the order' });
     }
-  };
+
+    const vendorIds = new Set(fetchedProducts.map((p) => p.vendor.toString()));
+    if (vendorIds.size > 1) {
+      return res.status(400).json({ message: 'You can only order products from a single vendor' });
+    }
+
+    // Validate stock availability
+    for (const item of products) {
+      const product = fetchedProducts.find((p) => p._id.toString() === item.productId);
+      if (!product || product.stock < item.quantity) {
+        return res.status(400).json({
+          message: `Insufficient stock for product: ${product.name}. Available: ${product.stock}`,
+        });
+      }
+    }
+
+    // Calculate total price
+    const totalPrice = products.reduce((total, item) => {
+      const product = fetchedProducts.find((p) => p._id.toString() === item.productId);
+      return total + product.price * item.quantity;
+    }, 0);
+
+    // Decrease stock count
+    for (const item of products) {
+      const product = fetchedProducts.find((p) => p._id.toString() === item.productId);
+      product.stock -= item.quantity;
+      await product.save(); // Update product stock
+    }
+
+    // Create order
+    const order = new Order({
+      buyer: req.user.id,
+      products: products.map((item) => ({
+        product: item.productId,
+        quantity: item.quantity,
+      })),
+      totalPrice,
+      status: 'confirmed',
+    });
+
+    await order.save();
+
+    res.status(201).json(order);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
   exports.getOrderHistory = async (req, res) => {
     try {

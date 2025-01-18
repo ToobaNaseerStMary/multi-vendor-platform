@@ -31,7 +31,7 @@ const Login = () => {
                     navigate('/vendor/dashboard');
                     break;
                 case 'buyer':
-                    navigate('/');
+                    navigate('/buyer/dashboard');
                     break;
                 default:
                     navigate('/');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import config from '../config';
+import config from "../config";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const VendorOrdersManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -50,29 +51,36 @@ const VendorOrdersManagement = () => {
   };
 
   const handleViewProducts = (products) => {
-    setSelectedProducts(products); // Set the selected products for the modal
-    setIsModalOpen(true); // Open the modal
+    setSelectedProducts(products);
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); // Close the modal
-    setSelectedProducts([]); // Clear the selected products
+    setIsModalOpen(false);
+    setSelectedProducts([]);
   };
 
   return (
-    <div className="vendor-dashboard">
-      <h1>Manage Orders</h1>
-      {error && <p className="error">{error}</p>}
+    <div className="container mt-5">
+      <h1 className="text-center mb-4">Vendor Order Management</h1>
+      {error && <div className="alert alert-danger">{error}</div>}
 
       {/* Filters Section */}
-      <div className="filters">
+      <div className="mb-4 d-flex justify-content-between">
         <input
           type="text"
+          className="form-control me-3"
           placeholder="Search by buyer username"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ maxWidth: "300px" }}
         />
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+        <select
+          className="form-select me-3"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ maxWidth: "200px" }}
+        >
           <option value="">Filter by Status</option>
           {statusOptions.map((status) => (
             <option key={status} value={status}>
@@ -80,73 +88,100 @@ const VendorOrdersManagement = () => {
             </option>
           ))}
         </select>
-        <button onClick={fetchOrders}>Apply Filters</button>
+        <button className="btn btn-primary" onClick={fetchOrders}>
+          Apply Filters
+        </button>
       </div>
 
       {/* Orders Table */}
-      <div className="orders-table">
-        <h2>Orders List</h2>
-        <table>
-          <thead>
+      <div className="table-responsive">
+        <h2 className="mb-3">Orders List</h2>
+        <table className="table table-bordered table-striped">
+          <thead className="table-dark">
             <tr>
-              <th>Buyer</th>
-              <th>Status</th>
-              <th>Total Price</th>
-              <th>Created At</th>
-              <th>Actions</th>
+              <th className="text-danger">Buyer</th>
+              <th className="text-danger">Status</th>
+              <th className="text-danger">Total Price</th>
+              <th className="text-danger">Created At</th>
+              <th className="text-danger">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order._id}>
-                <td>{order.buyer.username}</td>
-                <td>
-                  <select
-                    value={order.status}
-                    onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
-                  >
-                    {statusOptions.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>${order.totalPrice.toFixed(2)}</td>
-                <td>{new Date(order.createdAt).toLocaleString()}</td>
-                <td>
-                  <button onClick={() => handleViewProducts(order.products)}>View Products</button>
+            {orders.length > 0 ? (
+              orders.map((order) => (
+                <tr key={order._id}>
+                  <td>{order.buyer.username}</td>
+                  <td>
+                    <select
+                      className="form-select"
+                      value={order.status}
+                      onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>${order.totalPrice.toFixed(2)}</td>
+                  <td>{new Date(order.createdAt).toLocaleString()}</td>
+                  <td>
+                    <button
+                      className="btn btn-info btn-sm"
+                      onClick={() => handleViewProducts(order.products)}
+                    >
+                      View Products
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center">
+                  No orders found.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Modal for Products */}
       {isModalOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Products in Order</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Price</th>
-                  <th>Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedProducts.map((item) => (
-                  <tr key={item._id}>
-                    <td>{item.product.name}</td>
-                    <td>${item.product.price}</td>
-                    <td>{item.quantity}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button onClick={closeModal}>Close</button>
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Products in Order</h5>
+                <button type="button" className="btn-close" onClick={closeModal}></button>
+              </div>
+              <div className="modal-body">
+                <table className="table table-bordered">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="text-danger">Name</th>
+                      <th className="text-danger">Price</th>
+                      <th className="text-danger">Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedProducts.map((item) => (
+                      <tr key={item._id}>
+                        <td>{item.product.name}</td>
+                        <td>${item.product.price}</td>
+                        <td>{item.quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={closeModal}>
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,37 +1,78 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
-import config from '../config';
+import config from "../config";
+import "./style.css";
 
 const GetProducts = () => {
-  const [products, setProducts] = useState({});
-  const [page, setPage] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [limit, setLimit] = useState(10);
+  const [categories, setCategories] = useState({});
+  const [activeCategory, setActiveCategory] = useState(null);
   const [error, setError] = useState("");
-
+  const [cart, setCart] = useState([]);
+  const [vendorId, setVendorId] = useState(null);
+  const [cartError, setCartError] = useState("");
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchProducts();
-  }, [page]);
+  }, []);
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${config.base_url}api/buyer/products?page=${page}&limit=${limit}`, {
+      const response = await axios.get(`${config.base_url}api/buyer/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setProducts(response.data.data);
-      setTotalProducts(response.data.totalProducts);
+      const { data } = response.data;
+      setCategories(data);
+      setActiveCategory(Object.keys(data)[0]); // Set the first category as active by default
     } catch (err) {
       console.error(err);
       setError("Failed to fetch products");
     }
   };
 
-  const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= Math.ceil(totalProducts / limit)) {
-      setPage(newPage);
+  const addToCart = (product) => {
+    if (cart.length === 0 || vendorId === product.vendor._id) {
+      setCart([...cart, { ...product, quantity: 1 }]);
+      setVendorId(product.vendor._id);
+      setCartError("");
+    } else {
+      setCartError("You can only add products from the same vendor.");
+    }
+  };
+
+  const removeFromCart = (productId) => {
+    const updatedCart = cart.filter((item) => item._id !== productId);
+    setCart(updatedCart);
+    if (updatedCart.length === 0) setVendorId(null);
+  };
+
+  const updateQuantity = (productId, quantity) => {
+    const updatedCart = cart.map((item) =>
+      item._id === productId ? { ...item, quantity } : item
+    );
+    setCart(updatedCart);
+  };
+
+  const placeOrder = async () => {
+    try {
+      const orderProducts = cart.map((item) => ({
+        productId: item._id,
+        quantity: item.quantity,
+      }));
+
+      const response = await axios.post(
+        `${config.base_url}api/buyer/orders`,
+        { products: orderProducts },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("Order placed successfully!");
+      setCart([]);
+      setVendorId(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to place order.");
     }
   };
 
@@ -39,89 +80,116 @@ const GetProducts = () => {
     <div className="container mt-5">
       <h1 className="text-center mb-4">Buyer Dashboard</h1>
       {error && <div className="alert alert-danger">{error}</div>}
+      {cartError && <div className="alert alert-danger">{cartError}</div>}
 
-      <div id="productsAccordion">
-        {Object.entries(products).map(([categoryName, categoryProducts]) => (
-          <div className="card mb-3" key={categoryName}>
-            <div className="card-header" id={`heading-${categoryName}`}>
-              <h2 className="mb-0">
-                <button
-                  className="btn btn-link text-decoration-none"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target={`#collapse-${categoryName}`}
-                  aria-expanded="true"
-                  aria-controls={`collapse-${categoryName}`}
-                >
-                  {categoryName}
-                </button>
-              </h2>
-            </div>
-
-            <div
-              id={`collapse-${categoryName}`}
-              className="collapse"
-              aria-labelledby={`heading-${categoryName}`}
-              data-bs-parent="#productsAccordion"
+      {/* Categories Navigation */}
+      <ul className="nav nav-tabs">
+        {Object.keys(categories).map((categoryName) => (
+          <li className="nav-item" key={categoryName}>
+            <button
+              className={`nav-link ${activeCategory === categoryName ? "active" : ""}`}
+              onClick={() => setActiveCategory(categoryName)}
+              style={{ color: "red", fontWeight: "bold" }}
             >
-              <div className="card-body">
-                <div className="row">
-                  {categoryProducts.map((product) => (
-                    <div className="col-md-4 mb-3" key={product._id}>
-                      <div className="card h-100">
-                        <div className="card-body">
-                          <h5 className="card-title">{product.name}</h5>
-                          <p className="card-text">{product.description}</p>
-                          <p className="card-text">
-                            <strong>Price:</strong> ${product.price}
-                          </p>
-                          <p className="card-text">
-                            <strong>Stock:</strong> {product.stock}
-                          </p>
-                          <p className="card-text">
-                            <strong>Vendor:</strong> {product.vendor.username} (
-                            {product.vendor.email})
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+              {categoryName}
+            </button>
+          </li>
         ))}
+      </ul>
+
+      {/* Products Display */}
+      <div className="mt-4">
+        {activeCategory && categories[activeCategory].length > 0 ? (
+          <div className="table-responsive">
+            <table className="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Vendor Username</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories[activeCategory].map((product) => (
+                  <tr key={product._id}>
+                    <td>{product.name}</td>
+                    <td>{product.description}</td>
+                    <td>${product.price}</td>
+                    <td>{product.stock}</td>
+                    <td>{product.vendor.username}</td>
+                    <td>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => addToCart(product)}
+                      >
+                        Add to Cart
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-center">No products available in this category.</p>
+        )}
       </div>
 
-      {/* Pagination */}
-      <nav className="mt-4">
-        <ul className="pagination justify-content-center">
-          <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
-            <button className="page-link" onClick={() => handlePageChange(page - 1)}>
-              Previous
+      {/* Cart Section */}
+      <div className="mt-5">
+        <h3>Cart</h3>
+        {cart.length > 0 ? (
+          <div className="table-responsive">
+            <table className="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Quantity</th>
+                  <th>Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cart.map((item) => (
+                  <tr key={item._id}>
+                    <td>{item.name}</td>
+                    <td>${item.price}</td>
+                    <td>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        min="1"
+                        max={item.stock}
+                        onChange={(e) =>
+                          updateQuantity(item._id, parseInt(e.target.value))
+                        }
+                      />
+                    </td>
+                    <td>${item.price * item.quantity}</td>
+                    <td>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => removeFromCart(item._id)}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button className="btn btn-success" onClick={placeOrder}>
+              Place Order
             </button>
-          </li>
-          {[...Array(Math.ceil(totalProducts / limit)).keys()].map((pageNumber) => (
-            <li
-              className={`page-item ${page === pageNumber + 1 ? "active" : ""}`}
-              key={pageNumber}
-            >
-              <button className="page-link" onClick={() => handlePageChange(pageNumber + 1)}>
-                {pageNumber + 1}
-              </button>
-            </li>
-          ))}
-          <li
-            className={`page-item ${
-              page === Math.ceil(totalProducts / limit) ? "disabled" : ""
-            }`}
-          >
-            <button className="page-link" onClick={() => handlePageChange(page + 1)}>
-              Next
-            </button>
-          </li>
-        </ul>
-      </nav>
+          </div>
+        ) : (
+          <p>No items in the cart.</p>
+        )}
+      </div>
     </div>
   );
 };
