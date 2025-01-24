@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const vendorRoutes = require('./routes/vendorRoutes');
 const buyerRoutes = require('./routes/buyerRoutes');
+const escrowRoutes = require("./routes/escrowRoutes");
 
 const app = express();
 connectDB();
@@ -18,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/buyer', buyerRoutes);
 app.use('/api/vendor', vendorRoutes);
+//app.use("/api/escrow", escrowRoutes);
 
 const PORT = process.env.PORT || 3000;
 
