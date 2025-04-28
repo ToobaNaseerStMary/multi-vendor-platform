@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import axios from "axios";
+import Web3 from "web3";
+
+
+const web3 = new Web3(window.ethereum);
 
 const PaymentSystem = ({ orderId, totalAmount, sellerWallet }) => {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [network, setNetwork] = useState("Ethereum");
 
   const handlePayment = async () => {
     if (!paymentMethod) {
@@ -24,9 +29,8 @@ const PaymentSystem = ({ orderId, totalAmount, sellerWallet }) => {
         });
         setStatusMessage(response.data.message);
       } else if (paymentMethod === "bitcoin") {
-        // Call backend Bitcoin payment endpoint
-        const response = await axios.post("/api/escrow/bitcoin-payment", { orderId });
-        setStatusMessage(response.data.message);
+        alert("Bitcoin payment coming soon!");
+
       }
     } catch (err) {
       console.error(err);

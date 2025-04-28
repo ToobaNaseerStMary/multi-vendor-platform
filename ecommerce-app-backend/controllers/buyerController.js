@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Order = require('../models/Order');
+const { web3, escrowContract } = require("../services/web3");
 
 exports.getProducts = async (req, res) => {
   try {
@@ -61,7 +62,7 @@ exports.getProducts = async (req, res) => {
 
 exports.placeOrder = async (req, res) => {
   try {
-    const { products } = req.body; // Array of { productId, quantity }
+    const { products, paymentMethod, ethTransactionHash } = req.body; // Array of { productId, quantity }
 
     // Fetch products and validate they are from the same vendor
     const productIds = products.map((p) => p.productId);
@@ -107,10 +108,13 @@ exports.placeOrder = async (req, res) => {
         quantity: item.quantity,
       })),
       totalPrice,
+      paymentMethod,
+      ethTransactionHash: paymentMethod === "ethereum" ? ethTransactionHash : null,
       status: 'confirmed',
     });
 
     await order.save();
+
 
     res.status(201).json(order);
   } catch (error) {

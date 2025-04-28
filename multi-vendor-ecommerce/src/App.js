@@ -15,6 +15,7 @@ import VendorOrdersManagement from './components/vendor/VendorOrdersManagement';
 import BuyerDashboard from './components/buyer/Dashboard';
 import GetProducts from './components/buyer/GetProducts';
 import OrderHistory from './components/buyer/OrderHistory';
+import PaymentPage from "./components/buyer/PaymentPage";
 
 function App() {
     // Custom Hook to Hide Navbar on Specific Pages
@@ -49,6 +50,7 @@ function App() {
                     <Route path="/buyer/dashboard" element={<BuyerDashboard />} />
                     <Route path="/buyer/get-products" element={<GetProducts />} />
                     <Route path="/buyer/order-history" element={<OrderHistory />} />
+                    <Route path="/payment" element={<PaymentPage />} />
                 </Routes>
             </HideNavbar>
         </Router>

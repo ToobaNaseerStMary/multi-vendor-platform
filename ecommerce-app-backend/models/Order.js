@@ -9,6 +9,9 @@ const orderSchema = new mongoose.Schema({
     },
   ],
   totalPrice: { type: Number, required: true },
+  paymentMethod: { type: String, required: false},
+  ethTransactionHash: { type: String, required: false},
+  account: { type: String, required: false },
   status: { type: String, enum: ['confirmed', 'processed', 'shipped', 'delivered', 'cancelled'], default: 'processed' },
 }, { timestamps: true });
 

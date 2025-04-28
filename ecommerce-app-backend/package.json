@@ -20,6 +20,6 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.2",
     "nodemailer": "^6.9.16",
-    "web3": "^4.16.0"
+    "web3": "^1.10.0"
   }
 }

@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
+const { web3, escrowContract } = require("../services/web3");
 
 // Categories CRUD
 exports.createCategory = async (req, res) => {
@@ -126,6 +127,7 @@ exports.updateOrderStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
+    await releaseFunds(req.params.id);
     res.status(200).json(order);
   } catch (error) {
     console.error(error.message);
@@ -180,5 +182,30 @@ exports.updateUser = async (req, res) => {
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// When order delivered (admin or vendor triggers this)
+const releaseFunds = async (orderId) => {
+  try {
+    const order = await Order.findById(orderId).populate("products.product");
+    if (order.status == "delivered") {
+      const vendorEtherAddress = order.products[0].vendor.ethAddress;
+    const vendorBitcoinAddress = order.products[0].vendor.btcAddress;
+    if (order.paymentMethod === "ethereum") {
+      // Release funds from smart contract
+      await escrowContract.methods.releasePayment(order.vendorEtherAddress)
+        .send({ from: order.account }); // backend or admin wallet
+
+      order.status = "completed";
+      await order.save();
+    } else {
+      // Bitcoin: Just mark as completed after manual payment
+      order.status = "completed";
+      await order.save();
+    }
+    }
+  } catch (error) {
+    console.error(error.message);
   }
 };

@@ -3,6 +3,10 @@ import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import config from "../config";
 import "./style.css";
+import Web3 from "web3";
+import { useNavigate } from "react-router-dom";
+
+const web3 = new Web3(window.ethereum);
 
 const GetProducts = () => {
   const [categories, setCategories] = useState({});
@@ -12,6 +16,8 @@ const GetProducts = () => {
   const [vendorId, setVendorId] = useState(null);
   const [cartError, setCartError] = useState("");
   const token = localStorage.getItem("token");
+  const [network, setNetwork] = useState("Ethereum");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
@@ -61,18 +67,20 @@ const GetProducts = () => {
         quantity: item.quantity,
       }));
 
-      const response = await axios.post(
-        `${config.base_url}api/buyer/orders`,
-        { products: orderProducts },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-      alert("Order placed successfully!");
-      setCart([]);
-      setVendorId(null);
+      // Save order details locally
+      localStorage.setItem("cart", JSON.stringify(orderProducts));
+      localStorage.setItem("totalPrice", totalPrice);
+      localStorage.setItem("vendorId", vendorId);
+      localStorage.setItem("network", network);
+
+      // Redirect user to payment page
+      navigate("/payment");
+
     } catch (err) {
       console.error(err);
-      alert("Failed to place order.");
+      alert("Failed to initiate order.");
     }
   };
 
@@ -182,6 +190,10 @@ const GetProducts = () => {
                 ))}
               </tbody>
             </table>
+            <select onChange={(e) => setNetwork(e.target.value)}>
+                <option value="Ethereum">Ethereum</option>
+                <option value="Bitcoin">Bitcoin</option>
+            </select>
             <button className="btn btn-success" onClick={placeOrder}>
               Place Order
             </button>

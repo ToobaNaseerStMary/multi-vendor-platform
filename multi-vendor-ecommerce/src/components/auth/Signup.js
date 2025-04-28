@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import config from '../config';
-import './Auth.css'; // Import the CSS file for styling
-import { useNavigate } from 'react-router-dom';
+import './Auth.css';
 import { setToken } from '../../utils/tokenService';
 
 const Signup = () => {
@@ -12,6 +11,8 @@ const Signup = () => {
         username: '',
         password: '',
         role: 'buyer',
+        ethAddress: '',
+        btcAddress: '',
     });
     const navigate = useNavigate();
 
@@ -22,7 +23,15 @@ const Signup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${config.base_url}api/auth/signup`, formData);
+            const submitData = { ...formData };
+
+            // If not a vendor, remove wallet addresses before sending
+            if (formData.role !== 'vendor') {
+                delete submitData.ethAddress;
+                delete submitData.btcAddress;
+            }
+
+            const response = await axios.post(`${config.base_url}api/auth/signup`, submitData);
             console.log(response.data);
             setToken(response.data.token);
             switch (response.data.userObj.role) {
@@ -86,11 +95,41 @@ const Signup = () => {
                             name="role"
                             className="form-control"
                             onChange={handleChange}
+                            required
                         >
                             <option value="buyer">Buyer</option>
                             <option value="vendor">Vendor</option>
                         </select>
                     </div>
+
+                    {/* Show these fields only if role === 'vendor' */}
+                    {formData.role === 'vendor' && (
+                        <>
+                            <div className="mb-3">
+                                <label className="form-label">Ethereum Wallet Address</label>
+                                <input
+                                    type="text"
+                                    name="ethAddress"
+                                    className="form-control"
+                                    value={formData.ethAddress}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Bitcoin Wallet Address</label>
+                                <input
+                                    type="text"
+                                    name="btcAddress"
+                                    className="form-control"
+                                    value={formData.btcAddress}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </>
+                    )}
+
                     <button type="submit" className="btn btn-primary w-100 mt-3">
                         Sign Up
                     </button>

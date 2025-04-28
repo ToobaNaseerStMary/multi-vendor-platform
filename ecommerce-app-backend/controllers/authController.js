@@ -7,44 +7,41 @@ const sendEmail = require('../config/mailer');
 
 // Signup API
 exports.register = async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array().map(err => err.msg)[0] });
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array().map(err => err.msg)[0] });
+  }
+
+  const { username, email, password, role, ethAddress, btcAddress } = req.body;
+
+  try {
+    // Check if user already exists
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
     }
 
-    const { username, email, password, role } = req.body;
+    const newUserData = { username, email, password, role };
 
-    try {
-      // Check if user already exists
-      const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-      if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
-      }
-
-      const newUser = new User({ username, email, password, role });
-      newUser.isAdminApproved = true;
-
-      // Save user and send admin approval email for admin signup
-      await newUser.save();
-
-      // if (role === 'admin') {
-      //   // Send email to the admin for approval
-      //   const adminApprovalLink = `${process.env.HOST}/api/auth/approve-admin/${newUser._id}`;
-      //   await sendEmail({
-      //     to: 'toobanaseer.tn01@gmail.com',
-      //     subject: 'Admin Signup Approval',
-      //     text: `New admin signup request. Click to approve: ${adminApprovalLink}`,
-      //   });
-      // }
-
-      // Generate JWT token
-      const token = newUser.generateAuthToken();
-      const userObj = _.omit(newUser.toObject(), ['password']);
-      res.status(201).json({ userObj, token });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
+    // If vendor, add crypto addresses
+    if (role === 'vendor') {
+        newUserData.ethAddress = ethAddress;
+        newUserData.btcAddress = btcAddress;
     }
+
+    const newUser = new User(newUserData);
+    newUser.isAdminApproved = true;
+
+    await newUser.save();
+
+    // Generate JWT token
+    const token = newUser.generateAuthToken();
+    const userObj = _.omit(newUser.toObject(), ['password']);
+    res.status(201).json({ userObj, token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 // Login API

@@ -32,6 +32,8 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,  // Admin approval status
   },
+  ethAddress: { type: String, required: false },
+  btcAddress: { type: String, required: false },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 });
